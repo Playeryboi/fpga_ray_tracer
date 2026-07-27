@@ -30,11 +30,16 @@ module sphere_intersect_core(
     //defining registers for pipeline
     reg stage_1, stage_2, stage_3, stage_4, stage_5, stage_6, stage_7;
     
-    reg signed [37:0] a, a_intermediate; //Q6.32 need intermediate to not have long carry chain
-    reg signed [38:0] b, b_intermediate; //Q14.25, shifting by 1 requires extra bits
+    reg signed [37:0] a; //Q6.32 need intermediate to not have long carry chain
+    reg signed [38:0] b; //Q14.25, shifting by 1 requires extra bits
     reg signed [37:0] c; //Q20.18
+    
+    //intermediate stages to shorten propagation delay
+    reg signed [36:0] a_intermediate; //37 bits wide since adding 2 36 bit numbers could 
+    reg signed [36:0] b_intermediate; //result in overflow
+    
     //truncated a, b, and c to optimize for DSP usage
-    reg signed [18:0] a_trunc;//Q6.13
+    reg signed [18:0] a_trunc;//Q3.15
     reg signed [23:0] b_trunc;//Q14.10
     reg signed [24:0] c_trunc;//Q20.5
     
@@ -43,39 +48,40 @@ module sphere_intersect_core(
     reg signed [47:0] delta; //28.20
     //combinational logic (math)
     //[0] represents x, [1] represents y, [2] represents z
-    //each * is one DSP slice being used
+    
 
     reg signed [17:0] ray_minus_origin [2:0]; //Q9.9
 
     reg signed [35:0] a_mul [2:0]; //Q4.32       
     reg signed [35:0] b_mul [2:0]; //Q11.25
-    reg signed [36:0] c_mul_1, c_mul_2; //Q19.18
+    reg signed [36:0] c_add_1, c_add_2; //Q19.18
+    
     reg signed [35:0] ray_minus_origin_sqrd [2:0];
-    wire signed [8:0] radius_sqrd = object_size*object_size;
+    wire signed [7:0] radius_sqrd = object_size*object_size; //intenger * intenger
     
     reg signed [35:0] radius_sqrd_reg_stg1, radius_sqrd_reg_stg2; //need seperate stage registers
     reg signed [17:0] ray_dir_stg1 [2:0];
     
-    reg signed [35:0] a_mul_z_stg1;
-    reg signed [35:0] b_mul_z_stg1;
+    reg signed [36:0] a_mul_z_stg1;
+    reg signed [36:0] b_mul_z_stg1;
     
     always @(posedge clk) begin
         stage_1 <= start_core;
         if(start_core) begin
-            a_mul[0] <= ray_dir_x * ray_dir_x;
-            a_mul[1] <= ray_dir_y * ray_dir_y;
-            a_mul[2] <= ray_dir_z * ray_dir_z;
+            a_mul[0] <= ray_dir_x * ray_dir_x; //Q2.16 * Q2.16 -> Q4.32
+            a_mul[1] <= ray_dir_y * ray_dir_y; //Q2.16 * Q2.16 -> Q4.32
+            a_mul[2] <= ray_dir_z * ray_dir_z; //Q2.16 * Q2.16 -> Q4.32
 
             ray_dir_stg1[0] <= ray_dir_x;
             ray_dir_stg1[1] <= ray_dir_y;
             ray_dir_stg1[2] <= ray_dir_z;
             
-            radius_sqrd_reg_stg1 <= radius_sqrd <<< 18;//arithmetic alignment for stage 2
-                                                       //subtraction
+            radius_sqrd_reg_stg1 <= radius_sqrd <<< 18;//shifting so it aligns with the Q18.18 format
+                                                       
             
-            ray_minus_origin[0] <= camera_x - object_x;
-            ray_minus_origin[1] <= camera_y - object_y;
-            ray_minus_origin[2] <= camera_z - object_z;
+            ray_minus_origin[0] <= camera_x - object_x; //Q9.9
+            ray_minus_origin[1] <= camera_y - object_y; //Q9.9
+            ray_minus_origin[2] <= camera_z - object_z; //Q9.9
             
         end
     end
@@ -84,18 +90,19 @@ module sphere_intersect_core(
         stage_2 <= stage_1;
         if(stage_1) begin
         
-            a_intermediate <= a_mul[0] + a_mul[1];
-            a_mul_z_stg1 <= a_mul[2];
+            a_intermediate <= a_mul[0] + a_mul[1]; //Q4.32 + Q4.32
+            a_mul_z_stg1 <= a_mul[2]; //Q4.32
             
             radius_sqrd_reg_stg2 <= radius_sqrd_reg_stg1;
             
-            b_mul[0] <= ray_dir_stg1[0] * ray_minus_origin[0];
-            b_mul[1] <= ray_dir_stg1[1] * ray_minus_origin[1];
-            b_mul[2] <= ray_dir_stg1[2] * ray_minus_origin[2]; 
+            //          Q2.16             Q9.9
+            b_mul[0] <= ray_dir_stg1[0] * ray_minus_origin[0]; //Q11.25
+            b_mul[1] <= ray_dir_stg1[1] * ray_minus_origin[1]; //Q11.25
+            b_mul[2] <= ray_dir_stg1[2] * ray_minus_origin[2]; //Q11.25
             
-            ray_minus_origin_sqrd[0] <= ray_minus_origin[0]*ray_minus_origin[0];
-            ray_minus_origin_sqrd[1] <= ray_minus_origin[1]*ray_minus_origin[1];
-            ray_minus_origin_sqrd[2] <= ray_minus_origin[2]*ray_minus_origin[2];
+            ray_minus_origin_sqrd[0] <= ray_minus_origin[0]*ray_minus_origin[0]; //Q9.9 * Q9.9 -> Q18.18
+            ray_minus_origin_sqrd[1] <= ray_minus_origin[1]*ray_minus_origin[1]; //Q9.9 * Q9.9 -> Q18.18
+            ray_minus_origin_sqrd[2] <= ray_minus_origin[2]*ray_minus_origin[2]; //Q9.9 * Q9.9 -> Q18.18
             
         end
     end
@@ -103,28 +110,29 @@ module sphere_intersect_core(
     always @(posedge clk) begin
         stage_3 <= stage_2;
         if(stage_2) begin
-            a <= a_intermediate + a_mul_z_stg1;
+            a <= a_intermediate + a_mul_z_stg1; //Q5.32 + Q5.32
             
-            c_mul_1 <= ray_minus_origin_sqrd[0] + ray_minus_origin_sqrd[1];
-            c_mul_2 <= ray_minus_origin_sqrd[2] - radius_sqrd_reg_stg2;
+            c_add_1 <= ray_minus_origin_sqrd[0] + ray_minus_origin_sqrd[1]; //Q18.18 + Q18.18
+            c_add_2 <= ray_minus_origin_sqrd[2] - radius_sqrd_reg_stg2; //Q18.18 - Q18.18
             
-            b_intermediate <= b_mul[0] + b_mul[1];
-            b_mul_z_stg1 <= b_mul[2];
+            b_intermediate <= b_mul[0] + b_mul[1]; //Q11.25 + Q11.25
+            b_mul_z_stg1 <= b_mul[2]; //Q11.25
         end
     end    
  
      always @(posedge clk) begin
         stage_4 <= stage_3;
         if(stage_3) begin
-            c <= c_mul_1 + c_mul_2;
-            b <= (b_intermediate + b_mul_z_stg1) <<< 1;
+            c <= c_add_1 + c_add_2; //Q19.18 + Q19.18
+            b <= (b_intermediate + b_mul_z_stg1) <<< 1; //Q13.25 << 1 -> Q14.25
+            //shift left by 1 means multiplying by 2
         end
     end  
     
     always @(posedge clk) begin
         stage_5 <= stage_4;
         if(stage_4) begin
-            a_trunc <= a[37:19]; //Q6.32 --> Q6.13
+            a_trunc <= {a[37],a[33:17]}; //Q6.32 --> Q3.15
             b_trunc <= b[38:15]; //Q14.25 --> Q14.10
             c_trunc <= c[37:13]; //Q20.18 --> Q20.5 -> will use 25bit DSP input
         end
@@ -133,15 +141,16 @@ module sphere_intersect_core(
     always @(posedge clk) begin
         stage_6 <= stage_5;
         if(stage_5) begin
-            four_ac <= (a_trunc * c_trunc) * 16;
-            b_sqrd <= b_trunc * b_trunc;
+            four_ac <= (a_trunc * c_trunc) <<< 2; //Q3.15 * Q20.5 -> Q23.20 <<< 2 -> Q25.20 -> four_ac is a 48 bit so it gets sign extended
+            //shifting 2 bits to multiply by 4
+            b_sqrd <= b_trunc * b_trunc; //Q14.10 * Q14.10
         end
     end      
     
     always @(posedge clk) begin
         stage_7 <= stage_6;
         if(stage_6) begin
-            delta <= b_sqrd - four_ac;
+            delta <= b_sqrd - four_ac; //Q28.20 - Q28.20
         end
     end     
     
