@@ -80,14 +80,23 @@ module mock_bram_controller(
                 32'd44: mock_dout <= -32'sd157;
                 
                 // --- INTERSECTION DATA ---
-                // Object 1 Origin (Q9.9) - Sphere at (4, 0, 0)
-                32'd48: mock_dout <= 32'sd2048; 
+                // Object 1 Origin (Q9.9) - Sphere at (5, 0, 0)
+                32'd48: mock_dout <= 32'sd2560; 
                 32'd52: mock_dout <= 32'sd0;
                 32'd56: mock_dout <= 32'sd0;
                 
                 // Object 1 Params: Sphere, Diffuse, Size 2, White
                 32'd60: mock_dout <= 32'd12287; 
+
+
+                // Object 2 Origin (Q9.9) - Sphere at (5, 5, 5)
+                32'd64: mock_dout <= 32'sd2560; 
+                32'd68: mock_dout <= 32'sd2560;
+                32'd72: mock_dout <= 32'sd2560;
                 
+                // Object 2 Params: light, n/a, n/a, White
+                32'd76: mock_dout <= 32'd790527;
+                                 
                 default: mock_dout <= 32'sd0;
             endcase
         end

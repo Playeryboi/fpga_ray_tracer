@@ -33,19 +33,22 @@ module intersection_engine(
     reg signed [31:0] object [2:0];  
     reg [31:0] object_param;
     
+    reg [127:0] object1;
+    reg [127:0] object2;
+    
     wire [11:0] object_color = object_param[11:0];// object color which is 12bit 3 bytes
     wire [3:0] object_size = object_param[15:12]; // 1 byte
     wire [3:0] object_shape_material = object_param[19:16];// the shape parameter and material parameters only need 1 total byte
     //EX 00 -> sphere 01-> square 11-> plane || 00 -> diffuse 01-> reflective
     // total object size: 9 bytes
         
-    reg [7:0] object_counter = 8'd0; 
+    reg [3:0] object_counter = 4'd0; 
     reg [3:0] words_requested; 
     reg [3:0] words_received;  
     
     localparam  Wait = 2'b00,
                 Read = 2'b01,
-                Done = 2'b10; // ADDED: Safe parking state
+                Done = 2'b10; 
                 
     reg [1:0] state = Wait;      
 
@@ -76,7 +79,7 @@ module intersection_engine(
                     intersect_read <= 1'b0; 
                 end
 
-                // Data Catcher (CLEANED UP)
+                // Data Catcher
                 if (intersect_ready) begin
                     case (words_received)
                         4'd0: object[0] <= bram_data; 
@@ -90,10 +93,17 @@ module intersection_engine(
                     words_received <= words_received + 1;
                 end
                 
-                // Exit Condition & Start Core Pulse
+                // Exit Condition 
                 if (words_received == 4'd4) begin
-                    if (object_counter == 8'd1) begin 
-                        state <= Done; // Park here so we don't infinite loop!
+                    if(object_counter == 4'd1) begin
+                        object1 <= {object[0],object[1],object[2],object_param};
+                    end
+                    else if(object_counter == 4'd2) begin
+                        object2 <= {object[0],object[1],object[2],object_param};
+                    end   
+                                     
+                    if (object_counter == 8'd2) begin 
+                        state <= Done; 
                     end else begin
                         words_requested <= 4'd0;
                         words_received <= 4'd0;
@@ -118,15 +128,11 @@ module intersection_engine(
     .ray_dir_x(ray_dir_x),
     .ray_dir_y(ray_dir_y),
     .ray_dir_z(ray_dir_z),    
-    .object_x(object[0]),
-    .object_y(object[1]),
-    .object_z(object[2]),
+    .object1(object1),
+    .object2(object2),
     .camera_x(camera_x),
     .camera_y(camera_y),
     .camera_z(camera_z),    
-    .object_color(object_color),
-    .object_size(object_size),
-    .object_shape_material(object_shape_material),
     .hit_flag(hit_flag));
     
 endmodule
