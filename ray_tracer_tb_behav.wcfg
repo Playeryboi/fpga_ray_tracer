@@ -3,121 +3,61 @@
    <wave_state>
    </wave_state>
    <db_ref_list>
-      <db_ref path="ray_tracer_tb_behav.wdb" id="1">
+      <db_ref path="div_sqrt_tb_behav.wdb" id="1">
          <top_modules>
+            <top_module name="div_sqrt_tb" />
             <top_module name="glbl" />
-            <top_module name="ray_tracer_tb" />
          </top_modules>
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1,125,758.566 ns"></ZoomStartTime>
-      <ZoomEndTime time="1,127,248.997 ns"></ZoomEndTime>
-      <Cursor1Time time="1,126,335.000 ns"></Cursor1Time>
+      <ZoomStartTime time="161.458 ns"></ZoomStartTime>
+      <ZoomEndTime time="567.709 ns"></ZoomEndTime>
+      <Cursor1Time time="500.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="229"></NameColumnWidth>
-      <ValueColumnWidth column_width="252"></ValueColumnWidth>
+      <NameColumnWidth column_width="305"></NameColumnWidth>
+      <ValueColumnWidth column_width="360"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="17" />
-   <wvobject fp_name="/ray_tracer_tb/clk" type="logic">
+   <WVObjectSize size="6" />
+   <wvobject fp_name="/div_sqrt_tb/clk" type="logic">
       <obj_property name="ElementShortName">clk</obj_property>
       <obj_property name="ObjectShortName">clk</obj_property>
    </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/vga_module/frame_start" type="logic">
-      <obj_property name="ElementShortName">frame_start</obj_property>
-      <obj_property name="ObjectShortName">frame_start</obj_property>
+   <wvobject fp_name="/div_sqrt_tb/count" type="logic">
+      <obj_property name="ElementShortName">count</obj_property>
+      <obj_property name="ObjectShortName">count</obj_property>
    </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/setup_done" type="logic">
-      <obj_property name="ElementShortName">setup_done</obj_property>
-      <obj_property name="ObjectShortName">setup_done</obj_property>
-   </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/start_cores" type="logic">
-      <obj_property name="ElementShortName">start_cores</obj_property>
-      <obj_property name="ObjectShortName">start_cores</obj_property>
-   </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/vga_module/render" type="logic">
-      <obj_property name="ElementShortName">render</obj_property>
-      <obj_property name="ObjectShortName">render</obj_property>
-   </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/horz_value" type="array">
-      <obj_property name="ElementShortName">horz_value[9:0]</obj_property>
-      <obj_property name="ObjectShortName">horz_value[9:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/camera1/gen1/horz_counter" type="array">
-      <obj_property name="ElementShortName">horz_counter[10:0]</obj_property>
-      <obj_property name="ObjectShortName">horz_counter[10:0]</obj_property>
-      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/vert_value" type="array">
-      <obj_property name="ElementShortName">vert_value[9:0]</obj_property>
-      <obj_property name="ObjectShortName">vert_value[9:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/camera1/gen1/vert_counter" type="array">
-      <obj_property name="ElementShortName">vert_counter[10:0]</obj_property>
-      <obj_property name="ObjectShortName">vert_counter[10:0]</obj_property>
-      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/intersection_eng/s_core0/hit_flag" type="logic">
-      <obj_property name="ElementShortName">hit_flag</obj_property>
-      <obj_property name="ObjectShortName">hit_flag</obj_property>
-   </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/intersection_eng/s_core0/delta" type="array">
-      <obj_property name="ElementShortName">delta[47:0]</obj_property>
-      <obj_property name="ObjectShortName">delta[47:0]</obj_property>
-      <obj_property name="Radix">REALRADIX</obj_property>
-      <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
-      <obj_property name="radix_fractionWidth">20</obj_property>
-      <obj_property name="radix_otherWidth">0</obj_property>
-   </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/intersection_eng/s_core0/a_trunc" type="array">
-      <obj_property name="ElementShortName">a_trunc[17:0]</obj_property>
-      <obj_property name="ObjectShortName">a_trunc[17:0]</obj_property>
+   <wvobject fp_name="/div_sqrt_tb/UUT1/sqrt_delta" type="array">
+      <obj_property name="ElementShortName">sqrt_delta[23:0]</obj_property>
+      <obj_property name="ObjectShortName">sqrt_delta[23:0]</obj_property>
       <obj_property name="Radix">REALRADIX</obj_property>
       <obj_property name="radix_realType">UNSIGNEDFIXEDPOINTRADIX</obj_property>
+      <obj_property name="radix_fractionWidth">10</obj_property>
+      <obj_property name="radix_otherWidth">0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/div_sqrt_tb/UUT1/a" type="array">
+      <obj_property name="ElementShortName">a[17:0]</obj_property>
+      <obj_property name="ObjectShortName">a[17:0]</obj_property>
+      <obj_property name="Radix">REALRADIX</obj_property>
+      <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
       <obj_property name="radix_fractionWidth">15</obj_property>
       <obj_property name="radix_otherWidth">0</obj_property>
    </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/intersection_eng/s_core0/initial_x" type="array">
-      <obj_property name="ElementShortName">initial_x[17:0]</obj_property>
-      <obj_property name="ObjectShortName">initial_x[17:0]</obj_property>
+   <wvobject fp_name="/div_sqrt_tb/UUT1/b" type="array">
+      <obj_property name="ElementShortName">b[23:0]</obj_property>
+      <obj_property name="ObjectShortName">b[23:0]</obj_property>
       <obj_property name="Radix">REALRADIX</obj_property>
       <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
-      <obj_property name="radix_fractionWidth">17</obj_property>
+      <obj_property name="radix_fractionWidth">10</obj_property>
       <obj_property name="radix_otherWidth">0</obj_property>
    </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/intersection_eng/s_core0/a_times_initialx" type="array">
-      <obj_property name="ElementShortName">a_times_initialx[35:0]</obj_property>
-      <obj_property name="ObjectShortName">a_times_initialx[35:0]</obj_property>
+   <wvobject fp_name="/div_sqrt_tb/UUT1/t_distance" type="array">
+      <obj_property name="ElementShortName">t_distance[24:0]</obj_property>
+      <obj_property name="ObjectShortName">t_distance[24:0]</obj_property>
       <obj_property name="Radix">REALRADIX</obj_property>
       <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
-      <obj_property name="radix_fractionWidth">32</obj_property>
-      <obj_property name="radix_otherWidth">0</obj_property>
-   </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/intersection_eng/s_core0/number_1" type="array">
-      <obj_property name="ElementShortName">number_1[35:0]</obj_property>
-      <obj_property name="ObjectShortName">number_1[35:0]</obj_property>
-      <obj_property name="Radix">REALRADIX</obj_property>
-      <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
-      <obj_property name="radix_fractionWidth">32</obj_property>
-      <obj_property name="radix_otherWidth">0</obj_property>
-   </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/intersection_eng/s_core0/one_minus_ax" type="array">
-      <obj_property name="ElementShortName">one_minus_ax[35:0]</obj_property>
-      <obj_property name="ObjectShortName">one_minus_ax[35:0]</obj_property>
-      <obj_property name="Radix">REALRADIX</obj_property>
-      <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
-      <obj_property name="radix_fractionWidth">32</obj_property>
-      <obj_property name="radix_otherWidth">0</obj_property>
-   </wvobject>
-   <wvobject fp_name="/ray_tracer_tb/UUT/intersection_eng/s_core0/refined_x" type="array">
-      <obj_property name="ElementShortName">refined_x[43:0]</obj_property>
-      <obj_property name="ObjectShortName">refined_x[43:0]</obj_property>
-      <obj_property name="Radix">REALRADIX</obj_property>
-      <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
-      <obj_property name="radix_fractionWidth">41</obj_property>
+      <obj_property name="radix_fractionWidth">10</obj_property>
       <obj_property name="radix_otherWidth">0</obj_property>
    </wvobject>
 </wave_config>

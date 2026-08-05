@@ -63,7 +63,8 @@ COMPONENT co_processor_design
     reset : IN STD_LOGIC;
     clk_in1_0 : IN STD_LOGIC;
     clk_out2_0 : OUT STD_LOGIC;
-    intr_0 : IN STD_LOGIC_VECTOR(0 DOWNTO 0)
+    intr_0 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    clk_out3_0 : OUT STD_LOGIC
   );
 END COMPONENT;
 -- COMP_TAG_END ------  End cut for COMPONENT Declaration  ------
@@ -84,7 +85,8 @@ your_instance_name : co_processor_design
     reset => reset,
     clk_in1_0 => clk_in1_0,
     clk_out2_0 => clk_out2_0,
-    intr_0 => intr_0
+    intr_0 => intr_0,
+    clk_out3_0 => clk_out3_0
   );
 -- INST_TAG_END ------  End cut for INSTANTIATION Template  ------
 

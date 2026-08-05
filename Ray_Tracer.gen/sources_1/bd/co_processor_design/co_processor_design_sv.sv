@@ -74,7 +74,9 @@ module co_processor_design_sv (
   (* X_INTERFACE_IGNORE = "true" *)
   output wire clk_out2_0,
   (* X_INTERFACE_IGNORE = "true" *)
-  input wire [0:0] intr_0
+  input wire [0:0] intr_0,
+  (* X_INTERFACE_IGNORE = "true" *)
+  output wire clk_out3_0
 );
 
   co_processor_design inst (
@@ -88,7 +90,8 @@ module co_processor_design_sv (
     .reset(reset),
     .clk_in1_0(clk_in1_0),
     .clk_out2_0(clk_out2_0),
-    .intr_0(intr_0)
+    .intr_0(intr_0),
+    .clk_out3_0(clk_out3_0)
   );
 
 endmodule

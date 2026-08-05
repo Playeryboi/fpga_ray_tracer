@@ -1,7 +1,7 @@
 {
   "design": {
     "design_info": {
-      "boundary_crc": "0x4BA1A50802F1124",
+      "boundary_crc": "0xC225CAF30B78AC9B",
       "device": "xc7a100tcsg324-1",
       "gen_directory": "../../../../Ray_Tracer.gen/sources_1/bd/co_processor_design",
       "name": "co_processor_design",
@@ -178,6 +178,32 @@
             "value": "EDGE_RISING"
           }
         }
+      },
+      "clk_out3_0": {
+        "type": "clk",
+        "direction": "O",
+        "parameters": {
+          "CLK_DOMAIN": {
+            "value": "/clk_wiz_1_clk_out1",
+            "value_src": "ip_prop"
+          },
+          "FREQ_HZ": {
+            "value": "200000000",
+            "value_src": "ip_prop"
+          },
+          "FREQ_TOLERANCE_HZ": {
+            "value": "0",
+            "value_src": "default"
+          },
+          "INSERT_VIP": {
+            "value": "0",
+            "value_src": "default"
+          },
+          "PHASE": {
+            "value": "0.0",
+            "value_src": "ip_prop"
+          }
+        }
       }
     },
     "components": {
@@ -330,11 +356,26 @@
           "CLKOUT2_USED": {
             "value": "true"
           },
+          "CLKOUT3_JITTER": {
+            "value": "114.829"
+          },
+          "CLKOUT3_PHASE_ERROR": {
+            "value": "98.575"
+          },
+          "CLKOUT3_REQUESTED_OUT_FREQ": {
+            "value": "200.000"
+          },
+          "CLKOUT3_USED": {
+            "value": "true"
+          },
           "MMCM_CLKOUT1_DIVIDE": {
             "value": "40"
           },
+          "MMCM_CLKOUT2_DIVIDE": {
+            "value": "5"
+          },
           "NUM_OUT_CLKS": {
-            "value": "2"
+            "value": "3"
           },
           "PRIM_SOURCE": {
             "value": "Single_ended_clock_capable_pin"
@@ -866,6 +907,12 @@
         "ports": [
           "clk_wiz_1/clk_out2",
           "clk_out2_0"
+        ]
+      },
+      "clk_wiz_1_clk_out3": {
+        "ports": [
+          "clk_wiz_1/clk_out3",
+          "clk_out3_0"
         ]
       },
       "clk_wiz_1_locked": {

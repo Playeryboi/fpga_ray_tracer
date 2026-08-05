@@ -64,7 +64,8 @@ co_processor_design your_instance_name (
   .reset(reset), // input wire reset
   .clk_in1_0(clk_in1_0), // input wire clk_in1_0
   .clk_out2_0(clk_out2_0), // output wire clk_out2_0
-  .intr_0(intr_0) // input wire [0:0] intr_0
+  .intr_0(intr_0), // input wire [0:0] intr_0
+  .clk_out3_0(clk_out3_0) // output wire clk_out3_0
 );
 // INST_TAG_END ------  End cut for INSTANTIATION Template  ------
 

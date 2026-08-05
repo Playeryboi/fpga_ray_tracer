@@ -2,7 +2,7 @@
 //Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 //--------------------------------------------------------------------------------
 //Tool Version: Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
-//Date        : Sat Jul 25 11:32:32 2026
+//Date        : Mon Aug  3 09:15:58 2026
 //Host        : OmenLaptop16 running 64-bit major release  (build 9200)
 //Command     : generate_target co_processor_design_wrapper.bd
 //Design      : co_processor_design_wrapper
@@ -20,6 +20,7 @@ module co_processor_design_wrapper
     BRAM_PORTB_0_we,
     clk_in1_0,
     clk_out2_0,
+    clk_out3_0,
     intr_0,
     reset);
   input [31:0]BRAM_PORTB_0_addr;
@@ -31,6 +32,7 @@ module co_processor_design_wrapper
   input [3:0]BRAM_PORTB_0_we;
   input clk_in1_0;
   output clk_out2_0;
+  output clk_out3_0;
   input [0:0]intr_0;
   input reset;
 
@@ -43,6 +45,7 @@ module co_processor_design_wrapper
   wire [3:0]BRAM_PORTB_0_we;
   wire clk_in1_0;
   wire clk_out2_0;
+  wire clk_out3_0;
   wire [0:0]intr_0;
   wire reset;
 
@@ -56,6 +59,7 @@ module co_processor_design_wrapper
         .BRAM_PORTB_0_we(BRAM_PORTB_0_we),
         .clk_in1_0(clk_in1_0),
         .clk_out2_0(clk_out2_0),
+        .clk_out3_0(clk_out3_0),
         .intr_0(intr_0),
         .reset(reset));
 endmodule

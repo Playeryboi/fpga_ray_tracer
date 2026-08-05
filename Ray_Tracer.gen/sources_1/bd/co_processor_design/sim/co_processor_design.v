@@ -2,7 +2,7 @@
 //Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 //--------------------------------------------------------------------------------
 //Tool Version: Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
-//Date        : Sat Jul 25 11:32:32 2026
+//Date        : Mon Aug  3 09:15:58 2026
 //Host        : OmenLaptop16 running 64-bit major release  (build 9200)
 //Command     : generate_target co_processor_design.bd
 //Design      : co_processor_design
@@ -21,6 +21,7 @@ module co_processor_design
     BRAM_PORTB_0_we,
     clk_in1_0,
     clk_out2_0,
+    clk_out3_0,
     intr_0,
     reset);
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 BRAM_PORTB_0 ADDR" *) (* X_INTERFACE_MODE = "Slave" *) (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME BRAM_PORTB_0, MASTER_TYPE BRAM_CTRL, MEM_ECC NONE, MEM_SIZE 4096, MEM_WIDTH 32, READ_LATENCY 1" *) input [31:0]BRAM_PORTB_0_addr;
@@ -32,6 +33,7 @@ module co_processor_design
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 BRAM_PORTB_0 WE" *) input [3:0]BRAM_PORTB_0_we;
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 CLK.CLK_IN1_0 CLK" *) (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME CLK.CLK_IN1_0, CLK_DOMAIN co_processor_design_clk_in1_0, FREQ_HZ 100000000, FREQ_TOLERANCE_HZ 0, INSERT_VIP 0, PHASE 0.0" *) input clk_in1_0;
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 CLK.CLK_OUT2_0 CLK" *) (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME CLK.CLK_OUT2_0, CLK_DOMAIN /clk_wiz_1_clk_out1, FREQ_HZ 25000000, FREQ_TOLERANCE_HZ 0, INSERT_VIP 0, PHASE 0.0" *) output clk_out2_0;
+  (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 CLK.CLK_OUT3_0 CLK" *) (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME CLK.CLK_OUT3_0, CLK_DOMAIN /clk_wiz_1_clk_out1, FREQ_HZ 200000000, FREQ_TOLERANCE_HZ 0, INSERT_VIP 0, PHASE 0.0" *) output clk_out3_0;
   (* X_INTERFACE_INFO = "xilinx.com:signal:interrupt:1.0 INTR.INTR_0 INTERRUPT" *) (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME INTR.INTR_0, PortWidth 1, SENSITIVITY EDGE_RISING" *) input [0:0]intr_0;
   (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 RST.RESET RST" *) (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME RST.RESET, INSERT_VIP 0, POLARITY ACTIVE_LOW" *) input reset;
 
@@ -100,6 +102,7 @@ module co_processor_design
   wire axi_smc_M01_AXI_WVALID;
   wire clk_in1_0;
   wire clk_out2_0;
+  wire clk_out3_0;
   wire clk_wiz_1_locked;
   wire [0:0]intr_0;
   wire mdm_1_debug_sys_rst;
@@ -310,6 +313,7 @@ module co_processor_design
        (.clk_in1(clk_in1_0),
         .clk_out1(microblaze_0_Clk),
         .clk_out2(clk_out2_0),
+        .clk_out3(clk_out3_0),
         .locked(clk_wiz_1_locked),
         .resetn(reset));
   co_processor_design_mdm_1_0 mdm_1
