@@ -26,8 +26,7 @@ module intersection_engine(
     output reg intersect_read,
     input wire intersect_ready,
     input wire [31:0] bram_data,
-    output reg [31:0] bram_addr,
-    output wire hit_flag  
+    output reg [31:0] bram_addr 
     );
                
     reg signed [31:0] object [2:0];  
@@ -132,7 +131,7 @@ module intersection_engine(
     .object2(object2),
     .camera_x(camera_x),
     .camera_y(camera_y),
-    .camera_z(camera_z),    
-    .hit_flag(hit_flag));
+    .camera_z(camera_z)    
+    );
     
 endmodule

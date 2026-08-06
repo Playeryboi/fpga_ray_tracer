@@ -7,7 +7,10 @@ module t_distance_div (
     input wire signed [23:0] sqrt_delta, //Q14.10
     input wire signed [17:0] a, //Q3.15
     input wire signed [23:0] b, //Q14.10
-    output reg signed [24:0] t_distance //Q15.10
+    input wire input_hit,
+    output reg signed [24:0] t_distance, //Q15.10
+    output wire div_done,
+    output wire output_hit
     );
     // confirm radix for sqrt delta and b so they can subtract
     // b is currently Q14.10
@@ -18,7 +21,10 @@ module t_distance_div (
     //fits nicely into 25x18 DSP multiplier
     localparam STAGES = 24;
     
-    reg stage [STAGES + 2:0];
+    reg stage [STAGES + 3:0];
+    reg hit_flag [STAGES + 4:0];
+    assign div_done = stage[STAGES + 3]; 
+    assign output_hit = hit_flag[STAGES + 4];
     
     reg signed [24:0] numerator_plus; //Q15.10
     reg signed [24:0] numerator_minus; //Q15.10
@@ -44,7 +50,8 @@ module t_distance_div (
     
     
     always @(posedge clk) begin
-        prelim_stg1 <= sqrt_done;
+        hit_flag[0] <= input_hit;
+        if(input_hit) prelim_stg1 <= sqrt_done;
         if(sqrt_done) begin
             numerator_plus <= -b + sqrt_delta; //Q14.10 + Q14.10 --> needs extra bit for overflow
             numerator_minus <= -b - sqrt_delta;          
@@ -52,6 +59,7 @@ module t_distance_div (
     end
  
      always @(posedge clk) begin
+        hit_flag[1] <= hit_flag[0];
         stage[0] <= prelim_stg1;
         if(prelim_stg1) begin
             qoutient_plus[0] <= 24'd0;
@@ -72,6 +80,7 @@ module t_distance_div (
     generate
         for(stg = 0; stg < STAGES; stg = stg + 1) begin
             always @(posedge clk) begin
+            hit_flag[stg + 2] <= hit_flag[stg + 1];
             stage[stg + 1] <= stage[stg];
             denominator[stg + 1] <= denominator[stg]; 
             was_neg_plus[stg + 1] <= was_neg_plus[stg]; 
@@ -101,6 +110,7 @@ module t_distance_div (
     endgenerate
     
     always @(posedge clk) begin
+        hit_flag[26] <= hit_flag[25];
         stage[25] <= stage[24];
         was_neg_plus[25] <= was_neg_plus[24];  
         was_neg_minus[25] <= was_neg_minus[24];
@@ -112,6 +122,7 @@ module t_distance_div (
     end
 
     always @(posedge clk) begin
+        hit_flag[27] <= hit_flag[26];
         stage[26] <= stage[25];
         if(stage[25]) begin
             if(was_neg_plus[25]) qoutient_p_final <= -qoutient_p_prelim;
@@ -123,8 +134,9 @@ module t_distance_div (
     end    
  
      always @(posedge clk) begin
+        hit_flag[28] <= hit_flag[27];
+        stage[27] <= stage[26];
         if(stage[26]) begin
-            
             if(!qoutient_p_final[24] && !qoutient_m_final[24] ) begin
                 if(qoutient_p_final >= qoutient_m_final) t_distance <= qoutient_m_final;
                 else t_distance <= qoutient_p_final;

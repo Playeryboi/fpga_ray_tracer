@@ -89,7 +89,7 @@ module mock_bram_controller(
                 32'd60: mock_dout <= 32'd12287; 
 
 
-                // Object 2 Origin (Q9.9) - Sphere at (5, 5, 5)
+                // Object 2 Origin (Q9.9) - light at (5, 5, 5)
                 32'd64: mock_dout <= 32'sd2560; 
                 32'd68: mock_dout <= 32'sd2560;
                 32'd72: mock_dout <= 32'sd2560;

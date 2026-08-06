@@ -13,10 +13,7 @@ module sphere_intersect_core(
     
     input wire signed [17:0] camera_x,
     input wire signed [17:0] camera_y,
-    input wire signed [17:0] camera_z,
-        
-    
-    output reg hit_flag
+    input wire signed [17:0] camera_z
     );
     //Master sphere intersection formula
     //a = Ray_Dir * Ray_Dir
@@ -24,10 +21,16 @@ module sphere_intersect_core(
     //c = (Ray_origin - Sphere_origin)*(Ray_origin - Sphere_origin) - Radius*Radius
     // DELTA  = b^2 -4ac
    
+   
+   
    delta_sqrt SQRT0 (
-   
+    .clk(clk),                                 
+    .stage_7(stage_7),                              
+    .delta(delta), //Q28.20         
+    .sqrt_delta(sqrt_delta),            
+    .hit_flag(hit_flag_0),                            
+    .done(sqrt_done)                                 
    );
-   
    
     t_distance_div DIV0 (
     .clk(clk),
@@ -35,12 +38,19 @@ module sphere_intersect_core(
     .sqrt_delta(sqrt_delta),
     .a(a_trunc),
     .b(b_trunc),
-    .t_distance(t_distance)
+    .t_distance(t_distance),
+    .div_done(div_done),
+    .input_hit(hit_flag_0),
+    .output_hit(hit_flag_1)
     );
    
     wire signed [24:0] t_distance;
-    reg signed [24:0] sqrt_delta;
-    reg sqrt_done;
+    wire signed [24:0] sqrt_delta;
+    wire sqrt_done;
+    wire div_done;
+    wire hit_flag_0, hit_flag_1;
+    
+    
     //--------- Object 1 (Sphere) ----------------
     wire signed [17:0] object1_x = object1[113:96];//Q9.9
     wire signed [17:0] object1_y = object1[81:64]; //Q9.9
@@ -212,10 +222,6 @@ module sphere_intersect_core(
     
     always @(posedge clk) begin
         stage_8 <= stage_7;
-        hit_flag <= 1'b0;//fix this later
-        if(delta[47] == 1'b0 && stage_7) begin
-            hit_flag <= 1'b1;
-        end
     end    
     
     always @(posedge clk) begin

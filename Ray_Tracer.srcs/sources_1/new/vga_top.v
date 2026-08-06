@@ -3,7 +3,6 @@
 
 module vga_top(
     input wire clk,
-    input wire hit_flag,
     output wire VGA_HS,
     output wire VGA_VS,
     input wire[3:0] red_in,
@@ -34,8 +33,8 @@ module vga_top(
     assign new_frame = (horz_value == 784 && vert_value == 515) ? 1'b1:1'b0; //new frame goes high the second the last frame ends
     assign frame_start = (horz_value == 112 && vert_value == 35) ? 1'b1:1'b0; //frame start goes high 20 pixels before the actual frame starts
     
-    assign VGA_R = (render && hit_flag) ? 4'b1111:4'b0000;
-    assign VGA_G = (render && hit_flag) ? 4'b1111:4'b0000;
-    assign VGA_B = (render && hit_flag) ? 4'b1111:4'b0000;
+    assign VGA_R = (render) ? 4'b1111:4'b0000;
+    assign VGA_G = (render) ? 4'b1111:4'b0000;
+    assign VGA_B = (render) ? 4'b1111:4'b0000;
     
 endmodule
