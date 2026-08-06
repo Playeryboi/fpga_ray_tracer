@@ -4,20 +4,19 @@
 module t_distance_div (
     input wire clk,
     input wire sqrt_done,
-    input wire signed [23:0] sqrt_delta, //Q14.10
-    input wire signed [17:0] a, //Q3.15
-    input wire signed [23:0] b, //Q14.10
+    input wire signed [23:0] sqrt_delta, //Q13.11
+    input wire signed [17:0] a, //Q2.16
+    input wire signed [23:0] b, //Q13.11
     input wire input_hit,
-    output reg signed [24:0] t_distance, //Q15.10
+    output reg signed [24:0] t_distance, //Q12.12
     output wire div_done,
     output wire output_hit
     );
-    // confirm radix for sqrt delta and b so they can subtract
-    // b is currently Q14.10
+    
+    // b is Q13.11
     //Qout = Qnum - Qden
-    //we want 10 bits of precision
-    //10 + Qden (15) = 25 --> shift b left by 15 Q14.25
-    //Ouput should be Q15.10 -> sign bit + 14 int + 10 dec
+    //we want 12 bits of precision
+    //12 + Qden (16) = 28 --> shift numerators left by 17 
     //fits nicely into 25x18 DSP multiplier
     localparam STAGES = 24;
     
@@ -26,8 +25,8 @@ module t_distance_div (
     assign div_done = stage[STAGES + 3]; 
     assign output_hit = hit_flag[STAGES + 4];
     
-    reg signed [24:0] numerator_plus; //Q15.10
-    reg signed [24:0] numerator_minus; //Q15.10
+    reg signed [24:0] numerator_plus; 
+    reg signed [24:0] numerator_minus; 
     
     reg signed [47:0] numerator_plus_norm [STAGES:0]; //division doesn't work on negative numbers
     reg was_neg_plus [STAGES:0]; 
@@ -53,7 +52,7 @@ module t_distance_div (
         hit_flag[0] <= input_hit;
         if(input_hit) prelim_stg1 <= sqrt_done;
         if(sqrt_done) begin
-            numerator_plus <= -b + sqrt_delta; //Q14.10 + Q14.10 --> needs extra bit for overflow
+            numerator_plus <= -b + sqrt_delta; //Q13.11 + Q13.11 --> needs extra bit for overflow
             numerator_minus <= -b - sqrt_delta;          
         end
     end
@@ -64,15 +63,15 @@ module t_distance_div (
         if(prelim_stg1) begin
             qoutient_plus[0] <= 24'd0;
             qoutient_minus[0] <= 24'd0;
-            denominator[0] <= a << 1; //multiplying by 2 Q3.15
+            denominator[0] <= a << 1; //multiplying by 2 Q2.16
             
             was_neg_plus[0] <= numerator_plus[24]; //if sign bit is 1 then its negative
-            if(numerator_plus[24]) numerator_plus_norm[0] <= (-numerator_plus) << 15;
-            else numerator_plus_norm[0] <= numerator_plus << 15;     
+            if(numerator_plus[24]) numerator_plus_norm[0] <= (-numerator_plus) << 17;
+            else numerator_plus_norm[0] <= numerator_plus << 17;     
             
             was_neg_minus[0] <= numerator_minus[24];
-            if(numerator_minus[24]) numerator_minus_norm[0] <= (-numerator_minus) << 15;
-            else numerator_minus_norm[0] <= numerator_minus << 15;                           
+            if(numerator_minus[24]) numerator_minus_norm[0] <= (-numerator_minus) << 17;
+            else numerator_minus_norm[0] <= numerator_minus << 17;                           
         end
     end
     

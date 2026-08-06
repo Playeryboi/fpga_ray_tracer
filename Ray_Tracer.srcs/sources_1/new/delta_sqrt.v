@@ -4,9 +4,13 @@
 module delta_sqrt #(parameter W = 48)(
     input wire clk,
     input wire stage_7,
-    input wire signed [47:0] delta, //Q28.20
+    input wire signed [17:0] a_trunc_in,
+    input wire signed [23:0] b_trunc_in,
+    input wire signed [47:0] delta, //Q26.22
     output wire signed [23:0] sqrt_delta,
     output wire hit_flag,
+    output wire signed [17:0] a_trunc_out,
+    output wire signed [23:0] b_trunc_out,
     output wire done
     );
     localparam STAGES = W/2;
@@ -18,21 +22,25 @@ module delta_sqrt #(parameter W = 48)(
     reg [23:0] root [STAGES:0]; 
     reg intersected [STAGES:0];
     
+    reg signed [17:0] a_trunc [STAGES:0];//Q2.16 
+    reg signed [23:0] b_trunc [STAGES:0];//Q13.11
+    
+    
     assign hit_flag = intersected[STAGES]; //assign the hit flag to the final intersect flag
+    assign a_trunc_out = a_trunc[STAGES];
+    assign b_trunc_out = b_trunc[STAGES];
     assign done = stages[STAGES];
     assign sqrt_delta = root[STAGES];
    
     always @(posedge clk) begin
+        a_trunc[0] <= a_trunc_in;
+        b_trunc[0] <= b_trunc_in;
+        
         root[0] <= 24'b0;
         stages[0] <= stage_7;
         radicand[0] <= delta;
         remainder[0] <= 26'b0; 
-        if(!delta[W-1]) begin
-            intersected[0] <= 1'b1;           
-        end
-        else begin
-            intersected[0] <= 1'b0;
-        end
+        intersected[0] <= !delta[W-1];// if the msb is 0, then it did intersect
     end
     
     genvar stg;
@@ -44,6 +52,9 @@ module delta_sqrt #(parameter W = 48)(
             wire next_bit = !computed_rmd[25];
             
             always @(posedge clk) begin
+                a_trunc[stg+1] <= a_trunc[stg];
+                b_trunc[stg+1] <= b_trunc[stg];
+            
                 stages[stg + 1] <= stages[stg];
                 radicand[stg +1] <= radicand[stg];
                 intersected[stg + 1] <= intersected[stg];
