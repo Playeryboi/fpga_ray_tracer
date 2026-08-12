@@ -31,7 +31,7 @@ module vga_top(
     //assign read_en = 1'b1;
     assign render = (horz_value <= 783 && horz_value >= 144 && vert_value <= 514 && vert_value >= 35) ? 1'b1:1'b0;
     assign new_frame = (horz_value == 784 && vert_value == 515) ? 1'b1:1'b0; //new frame goes high the second the last frame ends
-    assign frame_start = (horz_value == 112 && vert_value == 35) ? 1'b1:1'b0; //frame start goes high 20 pixels before the actual frame starts
+    assign frame_start = (horz_value == 144 && vert_value == 34) ? 1'b1:1'b0; //frame_start is used to start cores a little bit before render starts
     
     assign VGA_R = (render) ? 4'b1111:4'b0000;
     assign VGA_G = (render) ? 4'b1111:4'b0000;

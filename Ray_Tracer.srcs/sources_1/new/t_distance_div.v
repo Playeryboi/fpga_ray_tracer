@@ -5,19 +5,20 @@ module t_distance_div (
     input wire clk,
     input wire sqrt_done,
     input wire signed [23:0] sqrt_delta, //Q13.11
-    input wire signed [17:0] a, //Q2.16
+    input wire signed [23:0] a, //Q2.22
     input wire signed [23:0] b, //Q13.11
     input wire input_hit,
-    output reg signed [24:0] t_distance, //Q12.12
+    output reg signed [24:0] t_distance, //Q13.12
     output wire div_done,
     output wire output_hit
     );
     
-    // b is Q13.11
+    // b and sqrt_delta are Q13.11
     //Qout = Qnum - Qden
-    //we want 12 bits of precision
-    //12 + Qden (16) = 28 --> shift numerators left by 17 
-    //fits nicely into 25x18 DSP multiplier
+    //we want 16 bits of precision
+    //16 + Qden (22) = 38 --> shift numerators left by 27
+    // so Q13.11 -> Q13.34
+    
     localparam STAGES = 24;
     
     reg stage [STAGES + 3:0];
@@ -28,13 +29,14 @@ module t_distance_div (
     reg signed [24:0] numerator_plus; 
     reg signed [24:0] numerator_minus; 
     
-    reg signed [47:0] numerator_plus_norm [STAGES:0]; //division doesn't work on negative numbers
+    reg signed [51:0] numerator_plus_norm [STAGES:0]; //division doesn't work on negative numbers
     reg was_neg_plus [STAGES:0]; 
     
-    reg signed [47:0] numerator_minus_norm [STAGES:0]; //Q23.25 extra padding for shifts
+    reg signed [51:0] numerator_minus_norm [STAGES:0]; //size is determined by 2n + 2 where n is the number of bits
     reg was_neg_minus [STAGES:0]; 
     
-    reg [17:0] denominator [STAGES:0]; //a is always positive
+    reg [23:0] a_stg0;
+    reg [23:0] denominator [STAGES:0]; //a is always positive
     
     reg [23:0] qoutient_plus [STAGES:0];
     reg [23:0] qoutient_minus [STAGES:0];
@@ -53,7 +55,8 @@ module t_distance_div (
         if(input_hit) prelim_stg1 <= sqrt_done;
         if(sqrt_done) begin
             numerator_plus <= -b + sqrt_delta; //Q13.11 + Q13.11 --> needs extra bit for overflow
-            numerator_minus <= -b - sqrt_delta;          
+            numerator_minus <= -b - sqrt_delta;     
+            a_stg0 <= a;     
         end
     end
  
@@ -63,15 +66,15 @@ module t_distance_div (
         if(prelim_stg1) begin
             qoutient_plus[0] <= 24'd0;
             qoutient_minus[0] <= 24'd0;
-            denominator[0] <= a << 1; //multiplying by 2 Q2.16
+            denominator[0] <= a_stg0 << 1; //multiplying by 2, stays Q2.22
             
             was_neg_plus[0] <= numerator_plus[24]; //if sign bit is 1 then its negative
-            if(numerator_plus[24]) numerator_plus_norm[0] <= (-numerator_plus) << 17;
-            else numerator_plus_norm[0] <= numerator_plus << 17;     
+            if(numerator_plus[24]) numerator_plus_norm[0] <= (-numerator_plus) << 27;
+            else numerator_plus_norm[0] <= numerator_plus << 27;     
             
             was_neg_minus[0] <= numerator_minus[24];
-            if(numerator_minus[24]) numerator_minus_norm[0] <= (-numerator_minus) << 17;
-            else numerator_minus_norm[0] <= numerator_minus << 17;                           
+            if(numerator_minus[24]) numerator_minus_norm[0] <= (-numerator_minus) << 27;
+            else numerator_minus_norm[0] <= numerator_minus << 27;                           
         end
     end
     
@@ -86,7 +89,7 @@ module t_distance_div (
             was_neg_minus[stg + 1] <= was_neg_minus[stg];
             
                 if(stage[stg]) begin
-                    if(!numerator_plus_norm[stg][47]) begin //if its greater than zero
+                    if(!numerator_plus_norm[stg][51]) begin //if its greater than zero
                         numerator_plus_norm[stg + 1] <= (numerator_plus_norm[stg] << 1) - {denominator[stg], 24'd0};
                         qoutient_plus[stg + 1] <= {qoutient_plus[stg][22:0], 1'b1};
                     end
@@ -95,7 +98,7 @@ module t_distance_div (
                         qoutient_plus[stg + 1] <= {qoutient_plus[stg][22:0], 1'b0};                    
                     end
                     
-                    if(!numerator_minus_norm[stg][47]) begin //if its greater than zero
+                    if(!numerator_minus_norm[stg][51]) begin //if its greater than zero
                         numerator_minus_norm[stg + 1] <= (numerator_minus_norm[stg] << 1) - {denominator[stg], 24'd0};
                         qoutient_minus[stg + 1] <= {qoutient_minus[stg][22:0], 1'b1};
                     end

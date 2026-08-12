@@ -127,7 +127,7 @@ module Ray_Tracer_Top(
         .intersect_grant(intersection_grant)
     );    
 //    object_bram_controller b_ctrl1(
-//    .clk(clk_25Mhz),
+//    .clk(clk_200Mhz),
 //    .bram_camera_addr(bram_camera_addr),
 //    .camera_read(camera_read),
 //    .camera_ready(camera_ready),

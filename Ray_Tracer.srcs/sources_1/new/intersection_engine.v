@@ -6,7 +6,7 @@ module intersection_engine(
 
     // Using setup_done instead of frame_start
     input wire setup_done, 
-    input wire render,
+    input wire render, //currently not being used
     output reg [3:0] red_wire,
     output reg [3:0] green_wire,
     output reg [3:0] blue_wire,

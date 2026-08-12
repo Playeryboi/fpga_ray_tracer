@@ -3,13 +3,13 @@
 
 module delta_sqrt #(parameter W = 48)(
     input wire clk,
-    input wire stage_7,
-    input wire signed [17:0] a_trunc_in,
+    input wire delta_done,
+    input wire signed [23:0] a_trunc_in,
     input wire signed [23:0] b_trunc_in,
     input wire signed [47:0] delta, //Q26.22
     output wire signed [23:0] sqrt_delta,
     output wire hit_flag,
-    output wire signed [17:0] a_trunc_out,
+    output wire signed [23:0] a_trunc_out,
     output wire signed [23:0] b_trunc_out,
     output wire done
     );
@@ -22,7 +22,7 @@ module delta_sqrt #(parameter W = 48)(
     reg [23:0] root [STAGES:0]; 
     reg intersected [STAGES:0];
     
-    reg signed [17:0] a_trunc [STAGES:0];//Q2.16 
+    reg signed [23:0] a_trunc [STAGES:0];//Q2.22
     reg signed [23:0] b_trunc [STAGES:0];//Q13.11
     
     
@@ -37,7 +37,7 @@ module delta_sqrt #(parameter W = 48)(
         b_trunc[0] <= b_trunc_in;
         
         root[0] <= 24'b0;
-        stages[0] <= stage_7;
+        stages[0] <= delta_done;
         radicand[0] <= delta;
         remainder[0] <= 26'b0; 
         intersected[0] <= !delta[W-1];// if the msb is 0, then it did intersect

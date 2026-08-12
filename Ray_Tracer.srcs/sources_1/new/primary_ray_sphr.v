@@ -24,10 +24,10 @@ module primary_ray_sphr(
     
     delta_sqrt SQRT0 (
     .clk(clk),                                 
-    .stage_7(stage_7),                              
+    .delta_done(stage_8),                              
     .delta(delta), //Q26.22    
-    .a_trunc_in(a_trunc[2]),
-    .b_trunc_in(b_trunc[2]),   
+    .a_trunc_in(a_trunc[3]),
+    .b_trunc_in(b_trunc[3]),   
     .sqrt_delta(sqrt_delta), //Q13.11            
     .hit_flag(hit_flag_0),
     .a_trunc_out(a_to_div), 
@@ -39,7 +39,7 @@ module primary_ray_sphr(
     .clk(clk),
     .sqrt_done(sqrt_done),
     .sqrt_delta(sqrt_delta), //Q13.11
-    .a(a_to_div), //Q2.16
+    .a(a_to_div), //Q2.22
     .b(b_to_div), //Q13.11
     .t_distance(t_distance),
     .div_done(div_done),
@@ -54,7 +54,7 @@ module primary_ray_sphr(
     wire hit_flag_0, hit_flag_1;
     //a and b have to be transferred to the pipeline to reach the division
     //module aligned
-    wire signed [17:0] a_to_div;
+    wire signed [23:0] a_to_div;
     wire signed [23:0] b_to_div;
     
     //--------- Object 1 (Sphere) ----------------
@@ -79,7 +79,9 @@ module primary_ray_sphr(
     //EX 00 -> sphere 01-> square 11-> plane || 00 -> diffuse 01-> reflective
     // total object size: 9 bytes
     //defining registers for pipeline
-    reg stage_0, stage_1, stage_2, stage_3, stage_4, stage_5, stage_6, stage_7;
+    reg stage_0, stage_1, stage_2, stage_3;
+    reg stage_4, stage_5, stage_6, stage_7;
+    reg stage_8;
     
     reg signed [17:0] camera_x_reg, camera_y_reg, camera_z_reg;
     reg signed [17:0] object1_x_reg, object1_y_reg, object1_z_reg;
@@ -94,9 +96,10 @@ module primary_ray_sphr(
     (* use_dsp = "no" *) reg signed [36:0] b_intermediate; //result in overflow
     
     //truncated a, b, and c to optimize for DSP usage
-    reg signed [17:0] a_trunc [2:0];//Q2.16 -> need an array to align pipeline
-    reg signed [23:0] b_trunc [2:0];//Q13.11
-    reg signed [24:0] c_trunc;//Q20.5
+    
+    reg signed [23:0] a_trunc [3:0]; //Q2.22
+    reg signed [23:0] b_trunc [3:0];//Q13.11
+    reg signed [23:0] c_trunc;//Q19.5
     
     reg signed [47:0] b_sqrd; // 24-bit * 24-bit
     reg signed [47:0] four_ac; // 18-bit * 25-bit + 3 bit shift
@@ -107,8 +110,8 @@ module primary_ray_sphr(
     reg signed [17:0] ray_minus_origin_for_sqrd [2:0]; //Q9.9
     reg signed [17:0] ray_minus_origin_for_b [2:0];
     
-    reg signed [35:0] a_mul [2:0]; //Q4.32       
-    reg signed [35:0] b_mul [2:0]; //Q11.25
+    reg signed [35:0] a_mul [3:0]; //Q4.32       
+    reg signed [35:0] b_mul [3:0]; //Q11.25
     (* use_dsp = "no" *) reg signed [36:0] c_add_1, c_add_2; //Q19.18
     
     reg signed [35:0] ray_minus_origin_sqrd [2:0];
@@ -120,6 +123,11 @@ module primary_ray_sphr(
     reg signed [36:0] a_mul_z_stg1;
     reg signed [36:0] b_mul_z_stg1;
     
+    
+    reg signed [41:0] four_ac_prelim; //42 bits because 24 + 18 is 42
+    reg signed [41:0] four_ac_hprod; //high bit product
+    reg signed [41:0] b_prelim_sqrd;
+    reg signed [41:0] b_high_prod; // Holds the upper multiplication result
     
     always @(posedge clk) begin
         stage_0 <= start_core;
@@ -192,9 +200,10 @@ module primary_ray_sphr(
     
     always @(posedge clk) begin
         stage_5 <= stage_4;
-        a_trunc[0] <= {a_stg1[37],a_stg1[32:16]}; //Q6.32 --> Q2.16
-        b_trunc[0] <= {b[38],b[36:14]}; //Q14.25 --> Q13.11
-        c_trunc <= c[37:13]; //Q20.18 --> Q20.5 -> will use 25bit DSP input
+        a_trunc[0] <= {a_stg1[37],a_stg1[32:10]}; //Q6.32 --> Q2.22 24 bits
+        
+        b_trunc[0] <= {b[38],b[36:14]}; //Q14.25 --> Q13.11 24 bits
+        c_trunc <= {c[37],c[35:13]}; //Q20.18 --> Q19.5 24 bits
     end     
     
     always @(posedge clk) begin
@@ -202,16 +211,28 @@ module primary_ray_sphr(
         a_trunc[1] <= a_trunc[0];
         b_trunc[1] <= b_trunc[0];
         
-        four_ac <= (a_trunc[0] * c_trunc) <<< 3; //Q2.16 * Q20.5 -> Q26.21 <<< 2 -> Q26.22 -> four_ac is a 48 bit so it gets sign extended
-        //shifting 2 bits to multiply by 4, then another shift to align for subtraction
-        b_sqrd <= b_trunc[0] * b_trunc[0]; //Q13.11 * Q13.11        
+        four_ac_prelim <= c_trunc * $signed({1'b0,a_trunc[0][16:0]});//lower 17 bits 
+        four_ac_hprod <= c_trunc * $signed({{11{a_trunc[0][23]}}, a_trunc[0][23:17]}); //upper 7 bits and sign extension
+        
+        b_prelim_sqrd <= b_trunc[0] * $signed({1'b0, b_trunc[0][16:0]}); //lower 17 bits 
+        b_high_prod   <= b_trunc[0] * $signed({{11{b_trunc[0][23]}}, b_trunc[0][23:17]}); //upper 7 bits
     end      
     
     always @(posedge clk) begin
         stage_7 <= stage_6;
+        
+        four_ac <= ($signed({four_ac_hprod[30:0], 17'b0}) + four_ac_prelim) >>> 3;
+        //shifting left 2 bits to multiply by 4, then 5 shifts right 
+        b_sqrd <= $signed({b_high_prod[30:0], 17'b0}) + b_prelim_sqrd; //Q26.22
+        
         a_trunc[2] <= a_trunc[1];
-        b_trunc[2] <= b_trunc[1];   
-        delta <= b_sqrd - four_ac; //Q26.22 - Q26.22      
-    end     
-
+        b_trunc[2] <= b_trunc[1];        
+    end   
+      
+    always @(posedge clk) begin
+        stage_8 <= stage_7;
+        a_trunc[3] <= a_trunc[2];
+        b_trunc[3] <= b_trunc[2];   
+        delta <= b_sqrd - four_ac; //Q26.22 - Q26.22     
+    end  
 endmodule
