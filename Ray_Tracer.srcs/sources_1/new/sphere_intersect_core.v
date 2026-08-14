@@ -13,7 +13,8 @@ module sphere_intersect_core(
     
     input wire signed [17:0] camera_x,
     input wire signed [17:0] camera_y,
-    input wire signed [17:0] camera_z
+    input wire signed [17:0] camera_z,
+    output wire LED
     );
    
    primary_ray_sphr PRS0 (
@@ -26,7 +27,8 @@ module sphere_intersect_core(
     .object2(object2),
     .camera_x(camera_x),
     .camera_y(camera_y),
-    .camera_z(camera_z)    
+    .camera_z(camera_z)  ,
+    .LED(LED)
     );
  
     

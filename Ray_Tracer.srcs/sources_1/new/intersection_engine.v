@@ -11,6 +11,7 @@ module intersection_engine(
     output reg [3:0] green_wire,
     output reg [3:0] blue_wire,
     
+    output wire LED,
     //camera module connections
     input wire signed [17:0] camera_x,
     input wire signed [17:0] camera_y,
@@ -131,7 +132,8 @@ module intersection_engine(
     .object2(object2),
     .camera_x(camera_x),
     .camera_y(camera_y),
-    .camera_z(camera_z)    
+    .camera_z(camera_z),
+    .LED(LED) 
     );
     
 endmodule

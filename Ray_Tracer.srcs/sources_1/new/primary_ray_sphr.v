@@ -13,7 +13,10 @@ module primary_ray_sphr(
     
     input wire signed [17:0] camera_x,
     input wire signed [17:0] camera_y,
-    input wire signed [17:0] camera_z
+    input wire signed [17:0] camera_z,
+    
+    output wire LED
+    
     );
     //Master sphere intersection formula
     //a = Ray_Dir * Ray_Dir
@@ -24,7 +27,7 @@ module primary_ray_sphr(
     
     delta_sqrt SQRT0 (
     .clk(clk),                                 
-    .delta_done(stage_8),                              
+    .delta_done(stage_9),                              
     .delta(delta), //Q26.22    
     .a_trunc_in(a_trunc[3]),
     .b_trunc_in(b_trunc[3]),   
@@ -47,11 +50,15 @@ module primary_ray_sphr(
     .output_hit(hit_flag_1)
     );
    
+   
     wire signed [24:0] t_distance;
     wire signed [23:0] sqrt_delta;
     wire sqrt_done;
     wire div_done;
     wire hit_flag_0, hit_flag_1;
+    
+    assign LED = ^t_distance;
+    
     //a and b have to be transferred to the pipeline to reach the division
     //module aligned
     wire signed [23:0] a_to_div;
@@ -81,10 +88,12 @@ module primary_ray_sphr(
     //defining registers for pipeline
     reg stage_0, stage_1, stage_2, stage_3;
     reg stage_4, stage_5, stage_6, stage_7;
-    reg stage_8;
+    reg stage_8, stage_9;
     
     reg signed [17:0] camera_x_reg, camera_y_reg, camera_z_reg;
     reg signed [17:0] object1_x_reg, object1_y_reg, object1_z_reg;
+    reg signed [17:0] ray_dir_x_reg, ray_dir_y_reg, ray_dir_z_reg;
+    reg signed [17:0] ray_dir_x_reg_stg1, ray_dir_y_reg_stg1, ray_dir_z_reg_stg1;
     
     (* use_dsp = "no" *) reg signed [37:0] a; //Q6.32 need intermediate to not have long carry chain
     (* use_dsp = "no" *) reg signed [37:0] a_stg1;
@@ -115,9 +124,10 @@ module primary_ray_sphr(
     (* use_dsp = "no" *) reg signed [36:0] c_add_1, c_add_2; //Q19.18
     
     reg signed [35:0] ray_minus_origin_sqrd [2:0];
-    wire signed [7:0] radius_sqrd = object1_size*object1_size; //intenger * intenger
+    reg [3:0] object1_size_reg;
     
-    reg signed [35:0] radius_sqrd_reg_stg1, radius_sqrd_reg_stg2; //need seperate stage registers
+    reg signed [7:0] radius_sqrd_stg1;
+    reg signed [35:0] radius_sqrd_reg_stg [1:0]; //need seperate stage registers
     reg signed [17:0] ray_dir_stg1 [2:0];
     
     reg signed [36:0] a_mul_z_stg1;
@@ -128,6 +138,9 @@ module primary_ray_sphr(
     reg signed [41:0] four_ac_hprod; //high bit product
     reg signed [41:0] b_prelim_sqrd;
     reg signed [41:0] b_high_prod; // Holds the upper multiplication result
+    
+    reg signed [17:0] ray_minus_origin_for_sqrd_stg1 [2:0];
+    reg signed [17:0] ray_minus_origin_for_b_stg1 [2:0];    
     
     always @(posedge clk) begin
         stage_0 <= start_core;
@@ -140,17 +153,21 @@ module primary_ray_sphr(
         object1_y_reg <= object1_y;
         object1_z_reg <= object1_z;
         
+        ray_dir_x_reg <= ray_dir_x;
+        ray_dir_y_reg <= ray_dir_y;
+        ray_dir_z_reg <= ray_dir_z;
+        
+        object1_size_reg <= object1_size;
+    end        
+    
+    always @(posedge clk) begin
         stage_1 <= stage_0;
         
-        a_mul[0] <= ray_dir_x * ray_dir_x; //Q2.16 * Q2.16 -> Q4.32
-        a_mul[1] <= ray_dir_y * ray_dir_y; //Q2.16 * Q2.16 -> Q4.32
-        a_mul[2] <= ray_dir_z * ray_dir_z; //Q2.16 * Q2.16 -> Q4.32
-
-        ray_dir_stg1[0] <= ray_dir_x;
-        ray_dir_stg1[1] <= ray_dir_y;
-        ray_dir_stg1[2] <= ray_dir_z;
+        radius_sqrd_stg1 <=  object1_size_reg * object1_size_reg; //4 bit * 4 bit = 8 bit
         
-        radius_sqrd_reg_stg1 <= radius_sqrd <<< 18;//shifting so it aligns with the Q18.18 format                                        
+        ray_dir_x_reg_stg1 <= ray_dir_x_reg;
+        ray_dir_y_reg_stg1 <= ray_dir_y_reg;
+        ray_dir_z_reg_stg1 <= ray_dir_z_reg;
         
         ray_minus_origin_for_sqrd[0] <= camera_x_reg - object1_x_reg; //Q9.9
         ray_minus_origin_for_sqrd[1] <= camera_y_reg - object1_y_reg; //Q9.9
@@ -158,40 +175,62 @@ module primary_ray_sphr(
         
         ray_minus_origin_for_b[0] <= camera_x_reg - object1_x_reg; //Q9.9
         ray_minus_origin_for_b[1] <= camera_y_reg - object1_y_reg; //Q9.9
-        ray_minus_origin_for_b[2] <= camera_z_reg - object1_z_reg; //Q9.9
+        ray_minus_origin_for_b[2] <= camera_z_reg - object1_z_reg; //Q9.9    
     end
     
     always @(posedge clk) begin
         stage_2 <= stage_1;
         
-        a_intermediate <= a_mul[0] + a_mul[1]; //Q4.32 + Q4.32
-        a_mul_z_stg1 <= a_mul[2]; //Q4.32
+        a_mul[0] <= ray_dir_x_reg_stg1  * ray_dir_x_reg_stg1 ; //Q2.16 * Q2.16 -> Q4.32
+        a_mul[1] <= ray_dir_y_reg_stg1  * ray_dir_y_reg_stg1 ; //Q2.16 * Q2.16 -> Q4.32
+        a_mul[2] <= ray_dir_z_reg_stg1  * ray_dir_z_reg_stg1 ; //Q2.16 * Q2.16 -> Q4.32
+
+        ray_dir_stg1[0] <= ray_dir_x_reg_stg1;
+        ray_dir_stg1[1] <= ray_dir_y_reg_stg1;
+        ray_dir_stg1[2] <= ray_dir_z_reg_stg1;
         
-        radius_sqrd_reg_stg2 <= radius_sqrd_reg_stg1;
+        radius_sqrd_reg_stg[0] <= radius_sqrd_stg1 <<< 18;//shifting so it aligns with the Q18.18 format                                        
         
-        //          Q2.16             Q9.9
-        b_mul[0] <= ray_dir_stg1[0] * ray_minus_origin_for_b[0]; //Q11.25
-        b_mul[1] <= ray_dir_stg1[1] * ray_minus_origin_for_b[1]; //Q11.25
-        b_mul[2] <= ray_dir_stg1[2] * ray_minus_origin_for_b[2]; //Q11.25
+        ray_minus_origin_for_sqrd_stg1[0] <= ray_minus_origin_for_sqrd[0]; //Q9.9
+        ray_minus_origin_for_sqrd_stg1[1] <= ray_minus_origin_for_sqrd[1]; //Q9.9
+        ray_minus_origin_for_sqrd_stg1[2] <= ray_minus_origin_for_sqrd[2]; //Q9.9
         
-        ray_minus_origin_sqrd[0] <= ray_minus_origin_for_sqrd[0]*ray_minus_origin_for_sqrd[0]; //Q9.9 * Q9.9 -> Q18.18
-        ray_minus_origin_sqrd[1] <= ray_minus_origin_for_sqrd[1]*ray_minus_origin_for_sqrd[1]; //Q9.9 * Q9.9 -> Q18.18
-        ray_minus_origin_sqrd[2] <= ray_minus_origin_for_sqrd[2]*ray_minus_origin_for_sqrd[2]; //Q9.9 * Q9.9 -> Q18.18
+        ray_minus_origin_for_b_stg1[0] <= ray_minus_origin_for_b[0]; //Q9.9
+        ray_minus_origin_for_b_stg1[1] <= ray_minus_origin_for_b[1]; //Q9.9
+        ray_minus_origin_for_b_stg1[2] <= ray_minus_origin_for_b[2]; //Q9.9
     end
     
     always @(posedge clk) begin
         stage_3 <= stage_2;
+        
+        a_intermediate <= a_mul[0] + a_mul[1]; //Q4.32 + Q4.32
+        a_mul_z_stg1 <= a_mul[2]; //Q4.32
+        
+        radius_sqrd_reg_stg[1] <= radius_sqrd_reg_stg[0];
+        
+        //          Q2.16             Q9.9
+        b_mul[0] <= ray_dir_stg1[0] * ray_minus_origin_for_b_stg1[0]; //Q11.25
+        b_mul[1] <= ray_dir_stg1[1] * ray_minus_origin_for_b_stg1[1]; //Q11.25
+        b_mul[2] <= ray_dir_stg1[2] * ray_minus_origin_for_b_stg1[2]; //Q11.25
+        
+        ray_minus_origin_sqrd[0] <= ray_minus_origin_for_sqrd_stg1[0]*ray_minus_origin_for_sqrd_stg1[0]; //Q9.9 * Q9.9 -> Q18.18
+        ray_minus_origin_sqrd[1] <= ray_minus_origin_for_sqrd_stg1[1]*ray_minus_origin_for_sqrd_stg1[1]; //Q9.9 * Q9.9 -> Q18.18
+        ray_minus_origin_sqrd[2] <= ray_minus_origin_for_sqrd_stg1[2]*ray_minus_origin_for_sqrd_stg1[2]; //Q9.9 * Q9.9 -> Q18.18
+    end
+    
+    always @(posedge clk) begin
+        stage_4 <= stage_3;
         a <= a_intermediate + a_mul_z_stg1; //Q5.32 + Q5.32
         
         c_add_1 <= ray_minus_origin_sqrd[0] + ray_minus_origin_sqrd[1]; //Q18.18 + Q18.18
-        c_add_2 <= ray_minus_origin_sqrd[2] - radius_sqrd_reg_stg2; //Q18.18 - Q18.18
+        c_add_2 <= ray_minus_origin_sqrd[2] - radius_sqrd_reg_stg[1]; //Q18.18 - Q18.18
         
         b_intermediate <= b_mul[0] + b_mul[1]; //Q11.25 + Q11.25
         b_mul_z_stg1 <= b_mul[2]; //Q11.25
     end    
  
     always @(posedge clk) begin
-        stage_4 <= stage_3;
+        stage_5 <= stage_4;
         a_stg1 <= a;
         c <= c_add_1 + c_add_2; //Q19.18 + Q19.18
         b <= (b_intermediate + b_mul_z_stg1) <<< 1; //Q13.25 << 1 -> Q14.25
@@ -199,7 +238,7 @@ module primary_ray_sphr(
     end  
     
     always @(posedge clk) begin
-        stage_5 <= stage_4;
+        stage_6 <= stage_5;
         a_trunc[0] <= {a_stg1[37],a_stg1[32:10]}; //Q6.32 --> Q2.22 24 bits
         
         b_trunc[0] <= {b[38],b[36:14]}; //Q14.25 --> Q13.11 24 bits
@@ -207,7 +246,7 @@ module primary_ray_sphr(
     end     
     
     always @(posedge clk) begin
-        stage_6 <= stage_5;
+        stage_7 <= stage_6;
         a_trunc[1] <= a_trunc[0];
         b_trunc[1] <= b_trunc[0];
         
@@ -219,7 +258,7 @@ module primary_ray_sphr(
     end      
     
     always @(posedge clk) begin
-        stage_7 <= stage_6;
+        stage_8 <= stage_7;
         
         four_ac <= ($signed({four_ac_hprod[30:0], 17'b0}) + four_ac_prelim) >>> 3;
         //shifting left 2 bits to multiply by 4, then 5 shifts right 
@@ -230,7 +269,7 @@ module primary_ray_sphr(
     end   
       
     always @(posedge clk) begin
-        stage_8 <= stage_7;
+        stage_9 <= stage_8;
         a_trunc[3] <= a_trunc[2];
         b_trunc[3] <= b_trunc[2];   
         delta <= b_sqrd - four_ac; //Q26.22 - Q26.22     
