@@ -8,7 +8,7 @@ module t_distance_div (
     input wire signed [23:0] a, //Q2.22
     input wire signed [23:0] b, //Q13.11
     input wire input_hit,
-    output reg signed [24:0] t_distance, //Q13.12
+    output reg signed [24:0] t_distance, //Q9.16
     output wire div_done,
     output wire output_hit
     );
@@ -53,6 +53,8 @@ module t_distance_div (
     always @(posedge clk) begin
         hit_flag[0] <= input_hit;
         if(input_hit) prelim_stg1 <= sqrt_done;
+        else prelim_stg1 <= 1'b0;
+        
         if(sqrt_done) begin
             numerator_plus <= -b + sqrt_delta; //Q13.11 + Q13.11 --> needs extra bit for overflow
             numerator_minus <= -b - sqrt_delta;     

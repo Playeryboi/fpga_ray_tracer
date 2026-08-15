@@ -15,8 +15,10 @@ module primary_ray_sphr(
     input wire signed [17:0] camera_y,
     input wire signed [17:0] camera_z,
     
-    output wire LED
-    
+    // to hit and normal module
+    output wire div_done,
+    output wire signed [24:0] t_distance,
+    output wire [53:0] delayed_ray_dir
     );
     //Master sphere intersection formula
     //a = Ray_Dir * Ray_Dir
@@ -44,25 +46,22 @@ module primary_ray_sphr(
     .sqrt_delta(sqrt_delta), //Q13.11
     .a(a_to_div), //Q2.22
     .b(b_to_div), //Q13.11
-    .t_distance(t_distance),
+    .t_distance(t_distance), //Q9.16
     .div_done(div_done),
     .input_hit(hit_flag_0),
     .output_hit(hit_flag_1)
     );
    
-   
-    wire signed [24:0] t_distance;
     wire signed [23:0] sqrt_delta;
     wire sqrt_done;
-    wire div_done;
     wire hit_flag_0, hit_flag_1;
-    
-    assign LED = ^t_distance;
     
     //a and b have to be transferred to the pipeline to reach the division
     //module aligned
     wire signed [23:0] a_to_div;
     wire signed [23:0] b_to_div;
+    
+    //data properties will have to be transferrered to the normal and hit module
     
     //--------- Object 1 (Sphere) ----------------
     wire signed [17:0] object1_x = object1[113:96];//Q9.9
@@ -71,17 +70,7 @@ module primary_ray_sphr(
     
     wire [11:0] object1_color = object1[11:0];// object color which is 12bit 3 bytes
     wire [3:0] object1_size = object1[15:12]; // 1 byte
-    wire [3:0] object1_shape_material = object1[19:16];// the shape parameter and material parameters only need 1 total byte
-    
-    //--------- Object 2 (light) ----------------
-    wire signed [17:0] object2_x = object2[113:96];//Q9.9
-    wire signed [17:0] object2_y = object2[81:64]; //Q9.9
-    wire signed [17:0] object2_z = object2[49:32]; //Q9.9
-    
-    wire [11:0] object2_color = object2[11:0];// object color which is 12bit 3 bytes
-    wire [3:0] object2_size = object2[15:12]; // 1 byte
-    wire [3:0] object2_shape_material = object2[19:16];// the shape parameter and material parameters only need 1 total byte
- 
+    wire [3:0] object1_shape_material = object1[19:16];// the shape parameter and material parameters only need 1 total byte 
     
     //EX 00 -> sphere 01-> square 11-> plane || 00 -> diffuse 01-> reflective
     // total object size: 9 bytes
@@ -142,6 +131,31 @@ module primary_ray_sphr(
     reg signed [17:0] ray_minus_origin_for_sqrd_stg1 [2:0];
     reg signed [17:0] ray_minus_origin_for_b_stg1 [2:0];    
     
+    wire [53:0] in_coming_ray = {ray_dir_x, ray_dir_y, ray_dir_z}; //will store in coming ray until t_distance is done
+    
+    //10 stages for delta
+    //26 stages for sqrt_delta
+    //29 stages for t_distance
+    //total 65 stages
+    localparam pipe_line_delay = 65 - 1; //N - 1
+    
+    (* shreg_extract = "yes" *) 
+    reg [53:0] ray_dir_delay_pipe [0:pipe_line_delay]; // will store ray direction until ready
+    
+    integer i;
+    
+    always @(posedge clk) begin
+        // Shift new pixel data into the start of the pipe
+        ray_dir_delay_pipe[0] <= in_coming_ray;
+        
+        // Shift existing data down the pipeline
+        for (i = 1; i <= pipe_line_delay; i = i + 1) begin
+            ray_dir_delay_pipe[i] <= ray_dir_delay_pipe[i-1];
+        end
+    end
+    
+    assign delayed_ray_dir = ray_dir_delay_pipe[pipe_line_delay];
+    
     always @(posedge clk) begin
         stage_0 <= start_core;
     
@@ -180,7 +194,7 @@ module primary_ray_sphr(
     
     always @(posedge clk) begin
         stage_2 <= stage_1;
-        
+             
         a_mul[0] <= ray_dir_x_reg_stg1  * ray_dir_x_reg_stg1 ; //Q2.16 * Q2.16 -> Q4.32
         a_mul[1] <= ray_dir_y_reg_stg1  * ray_dir_y_reg_stg1 ; //Q2.16 * Q2.16 -> Q4.32
         a_mul[2] <= ray_dir_z_reg_stg1  * ray_dir_z_reg_stg1 ; //Q2.16 * Q2.16 -> Q4.32
@@ -201,7 +215,7 @@ module primary_ray_sphr(
     end
     
     always @(posedge clk) begin
-        stage_3 <= stage_2;
+        stage_3 <= stage_2;     
         
         a_intermediate <= a_mul[0] + a_mul[1]; //Q4.32 + Q4.32
         a_mul_z_stg1 <= a_mul[2]; //Q4.32
@@ -220,6 +234,7 @@ module primary_ray_sphr(
     
     always @(posedge clk) begin
         stage_4 <= stage_3;
+               
         a <= a_intermediate + a_mul_z_stg1; //Q5.32 + Q5.32
         
         c_add_1 <= ray_minus_origin_sqrd[0] + ray_minus_origin_sqrd[1]; //Q18.18 + Q18.18
@@ -231,6 +246,7 @@ module primary_ray_sphr(
  
     always @(posedge clk) begin
         stage_5 <= stage_4;
+        
         a_stg1 <= a;
         c <= c_add_1 + c_add_2; //Q19.18 + Q19.18
         b <= (b_intermediate + b_mul_z_stg1) <<< 1; //Q13.25 << 1 -> Q14.25
@@ -239,14 +255,15 @@ module primary_ray_sphr(
     
     always @(posedge clk) begin
         stage_6 <= stage_5;
-        a_trunc[0] <= {a_stg1[37],a_stg1[32:10]}; //Q6.32 --> Q2.22 24 bits
         
+        a_trunc[0] <= {a_stg1[37],a_stg1[32:10]}; //Q6.32 --> Q2.22 24 bits     
         b_trunc[0] <= {b[38],b[36:14]}; //Q14.25 --> Q13.11 24 bits
         c_trunc <= {c[37],c[35:13]}; //Q20.18 --> Q19.5 24 bits
     end     
     
     always @(posedge clk) begin
         stage_7 <= stage_6;
+            
         a_trunc[1] <= a_trunc[0];
         b_trunc[1] <= b_trunc[0];
         

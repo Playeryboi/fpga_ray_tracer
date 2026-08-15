@@ -16,7 +16,7 @@ module delta_sqrt #(parameter W = 48)(
     localparam STAGES = W/2;
     
     //W is the width of the incoming radicand which is delta
-    reg stages [STAGES:0];
+    reg stages [STAGES:0]; //N + 1 stages
     reg signed [W-1:0] radicand [STAGES:0]; //W bits wide
     reg signed [25:0] remainder [STAGES:0]; 
     reg [23:0] root [STAGES:0]; 
