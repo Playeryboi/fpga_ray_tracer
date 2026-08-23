@@ -33,30 +33,30 @@ module Ray_Tracer_Top(
     wire start_cores;
     
 //// Add this right below your wire declarations
-//    reg [1:0] counter = 0;
-//    always @(posedge clk) begin
-//        counter <= counter + 1;
-//    end
+    reg [1:0] counter = 0;
+    always @(posedge clk) begin
+        counter <= counter + 1;
+    end
     
-//    wire clk_25Mhz_logic = counter[1];
+    wire clk_25Mhz_logic = counter[1];
     
-//    BUFG clock_buffer_inst (
-//        .I(clk_25Mhz_logic), 
-//        .O(clk_25Mhz)        
-//    );    
+    BUFG clock_buffer_inst (
+        .I(clk_25Mhz_logic), 
+        .O(clk_25Mhz)        
+    );    
     //processor and bram controller connections
-    co_processor_design_wrapper CPU0 (
-    .BRAM_PORTB_0_addr(out_addr),
-    .BRAM_PORTB_0_clk(clk_25Mhz),
-    .BRAM_PORTB_0_dout(dout_bram),
-    .BRAM_PORTB_0_en(bram_en),
-    .BRAM_PORTB_0_rst(rst),
-    .clk_in1_0(clk),
-    .clk_out2_0(clk_25Mhz),
-    .clk_out3_0(clk_200Mhz),
-    .intr_0(new_frame),
-    .reset(cpu_reset)
-    );
+//    co_processor_design_wrapper CPU0 (
+//    .BRAM_PORTB_0_addr(out_addr),
+//    .BRAM_PORTB_0_clk(clk_25Mhz),
+//    .BRAM_PORTB_0_dout(dout_bram),
+//    .BRAM_PORTB_0_en(bram_en),
+//    .BRAM_PORTB_0_rst(rst),
+//    .clk_in1_0(clk),
+//    .clk_out2_0(clk_25Mhz),
+//    .clk_out3_0(clk_200Mhz),
+//    .intr_0(new_frame),
+//    .reset(cpu_reset)
+//    );
      
     vga_top vga_module (
     .clk(clk_25Mhz), 
@@ -77,7 +77,7 @@ module Ray_Tracer_Top(
     
     
     camera_module camera1(
-    .clk(clk_200Mhz),
+    .clk(clk_25Mhz),
     .frame_start(frame_start),
     .granted(camera_grant),
     .camera_read(camera_read),
@@ -95,7 +95,7 @@ module Ray_Tracer_Top(
     );
     
     intersection_engine intersection_eng(
-    .clk(clk_200Mhz),
+    .clk(clk_25Mhz),
     .setup_done(setup_done), 
     .render(render),
     .red_wire(red_wire),
@@ -116,34 +116,34 @@ module Ray_Tracer_Top(
     .LED(LED)
     );
     
-//    mock_bram_controller mock_ctrl (
-//        .clk(clk_25Mhz), // MUST be tied to your 25MHz pixel clock!
-//        .bram_camera_addr(bram_camera_addr),
-//        .camera_read(camera_read),
-//        .camera_ready(camera_ready),
-//        .camera_data(camera_data),
-//        .camera_grant(camera_grant),
-//        .bram_intersect_addr(bram_intersection_addr),
-//        .intersect_read(intersection_read),
-//        .intersect_ready(intersection_ready),
-//        .intersect_data(intersection_data),
-//        .intersect_grant(intersection_grant)
-//    );    
-    object_bram_controller b_ctrl1(
-    .clk(clk_200Mhz),
-    .bram_camera_addr(bram_camera_addr),
-    .camera_read(camera_read),
-    .camera_ready(camera_ready),
-    .camera_data(camera_data),
-    .camera_grant(camera_grant),
-    .bram_intersect_addr(bram_intersection_addr),
-    .intersect_read(intersection_read),
-    .intersect_ready(intersection_ready),
-    .intersect_data(intersection_data),
-    .intersect_grant(intersection_grant),
-    .bram_data(dout_bram),
-    .read_en(bram_en),
-    .bram_addr(out_addr)
-    );  
+    mock_bram_controller mock_ctrl (
+        .clk(clk_25Mhz), 
+        .bram_camera_addr(bram_camera_addr),
+        .camera_read(camera_read),
+        .camera_ready(camera_ready),
+        .camera_data(camera_data),
+        .camera_grant(camera_grant),
+        .bram_intersect_addr(bram_intersection_addr),
+        .intersect_read(intersection_read),
+        .intersect_ready(intersection_ready),
+        .intersect_data(intersection_data),
+        .intersect_grant(intersection_grant)
+    );    
+//    object_bram_controller b_ctrl1(
+//    .clk(clk_200Mhz),
+//    .bram_camera_addr(bram_camera_addr),
+//    .camera_read(camera_read),
+//    .camera_ready(camera_ready),
+//    .camera_data(camera_data),
+//    .camera_grant(camera_grant),
+//    .bram_intersect_addr(bram_intersection_addr),
+//    .intersect_read(intersection_read),
+//    .intersect_ready(intersection_ready),
+//    .intersect_data(intersection_data),
+//    .intersect_grant(intersection_grant),
+//    .bram_data(dout_bram),
+//    .read_en(bram_en),
+//    .bram_addr(out_addr)
+//    );  
     
 endmodule

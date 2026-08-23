@@ -7,6 +7,7 @@ module sphere_hit_and_normal(
     input wire [53:0] ray_dir,               
     input wire [127:0] object1,
     input wire [127:0] object2,
+    input wire input_hit_flag,
     
     input wire signed [17:0] camera_x, //Q9.9
     input wire signed [17:0] camera_y,
@@ -15,11 +16,10 @@ module sphere_hit_and_normal(
     output wire [53:0] normal_packed,
     output wire [74:0] hit_point_packed,
     output wire module_done,
+    output wire output_hit_flag,
     
     output wire LED
     );
-    
-    
      assign LED = ^normal_packed;
     //keeping in mind that this currently works with a fixed amount of objects
     
@@ -33,15 +33,6 @@ module sphere_hit_and_normal(
     wire [11:0] object1_color = object1[11:0];// object color which is 12bit 3 bytes                                         
     wire [3:0] object1_size = object1[15:12]; // 1 byte                                                                      
     wire [3:0] object1_shape_material = object1[19:16];// the shape parameter and material parameters only need 1 total byte 
-        
-    //--------- Object 2 (light) ----------------
-    wire signed [17:0] object2_x = object2[113:96];//Q9.9
-    wire signed [17:0] object2_y = object2[81:64]; //Q9.9
-    wire signed [17:0] object2_z = object2[49:32]; //Q9.9
-    
-    wire [11:0] object2_color = object2[11:0];// object color which is 12bit 3 bytes
-    wire [3:0] object2_size = object2[15:12]; // 1 byte
-    wire [3:0] object2_shape_material = object2[19:16];// the shape parameter and material parameters only need 1 total byte
     
     //ray vectors unpacked {ray_dir_x, ray_dir_y, ray_dir_z}
     wire signed [17:0] ray_dir_x = ray_dir[53:36];
@@ -65,6 +56,9 @@ module sphere_hit_and_normal(
     reg signed [24:0] normal_prelim [2:0]; //hit point - sphere origin
     reg signed [42:0] normal [2:0]; //43 bit result from multiplication
     reg signed [17:0] final_normal [2:0]; //truncated to be Q2.16
+    
+    reg hit_flag_pipe [6:0];
+    assign output_hit_flag = hit_flag_pipe[6];
     
     assign normal_packed = {final_normal[0],final_normal[1],final_normal[2]}; //packing normal to transfer to another module
     assign module_done = stage_6;
@@ -95,6 +89,7 @@ module sphere_hit_and_normal(
     //ray_origin is the camera origin
     always @(posedge clk) begin
         stage_0 <= start;
+        hit_flag_pipe[0] <= input_hit_flag;
         
         t_distance_pipeline <= t_distance;
         
@@ -106,6 +101,7 @@ module sphere_hit_and_normal(
     
     always @(posedge clk) begin
         stage_1 <= stage_0;
+        hit_flag_pipe[1] <= hit_flag_pipe[0];
         
         ray_origin_pipeline[0] <= {{2{camera_x[17]}}, camera_x, 23'd0}; //input doesnt change until the frame ends
         ray_origin_pipeline[1] <= {{2{camera_y[17]}}, camera_y, 23'd0}; // but need registers so Vivado uses the DSPs
@@ -120,6 +116,7 @@ module sphere_hit_and_normal(
     
     always @(posedge clk) begin
         stage_2 <= stage_1;
+        hit_flag_pipe[2] <= hit_flag_pipe[1];
         
         hit_point[0] <=  prelim_hp[0] + ray_origin_pipeline[0];// x  44 bit result  Q12.32
         hit_point[1] <=  prelim_hp[1] + ray_origin_pipeline[1];// y  44 bit result  Q12.32
@@ -131,6 +128,7 @@ module sphere_hit_and_normal(
     
     always @(posedge clk) begin
         stage_3 <= stage_2;
+        hit_flag_pipe[3] <= hit_flag_pipe[2];
         
         // [43] is the sign bit. [41:18] are the 24 magnitude bits. 1 + 24 = 25 bits exactly.
         hit_point_trunc[0] <= {hit_point[0][43], hit_point[0][41:18]};//Q11.14
@@ -145,6 +143,7 @@ module sphere_hit_and_normal(
     
     always @(posedge clk) begin
         stage_4 <= stage_3;
+        hit_flag_pipe[4] <= hit_flag_pipe[3];
         
         hit_point_pipeline[0] <= {hit_point_trunc[0],hit_point_trunc[1],hit_point_trunc[2]};
         
@@ -156,6 +155,7 @@ module sphere_hit_and_normal(
     
     always @(posedge clk) begin
         stage_5 <= stage_4;
+        hit_flag_pipe[5] <= hit_flag_pipe[4];
         
         hit_point_pipeline[1] <= hit_point_pipeline[0];
         
@@ -166,12 +166,13 @@ module sphere_hit_and_normal(
      
      always @(posedge clk) begin
         stage_6 <= stage_5;
+        hit_flag_pipe[6] <= hit_flag_pipe[5];
         
         hit_point_pipeline[2] <= hit_point_pipeline[1];
         
-        final_normal[0] <= normal[0][31:14]; //Q2.16  
-        final_normal[1] <= normal[1][31:14]; //Q2.16  
-        final_normal[2] <= normal[2][31:14]; //Q2.16  
+        final_normal[0] <= $signed({normal[0][42],normal[0][30:14]}); //Q2.16  
+        final_normal[1] <= $signed({normal[1][42],normal[1][30:14]}); //Q2.16  
+        final_normal[2] <= $signed({normal[2][42],normal[2][30:14]}); //Q2.16  
         
      end
 endmodule

@@ -30,10 +30,10 @@ module t_distance_div (
     reg signed [24:0] numerator_minus; 
     
     reg signed [51:0] numerator_plus_norm [STAGES:0]; //division doesn't work on negative numbers
-    reg was_neg_plus [STAGES:0]; 
+    reg was_neg_plus [STAGES + 1:0]; 
     
     reg signed [51:0] numerator_minus_norm [STAGES:0]; //size is determined by 2n + 2 where n is the number of bits
-    reg was_neg_minus [STAGES:0]; 
+    reg was_neg_minus [STAGES + 1:0]; 
     
     reg [23:0] a_stg0;
     reg [23:0] denominator [STAGES:0]; //a is always positive

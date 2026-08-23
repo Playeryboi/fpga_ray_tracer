@@ -18,7 +18,8 @@ module primary_ray_sphr(
     // to hit and normal module
     output wire div_done,
     output wire signed [24:0] t_distance,
-    output wire [53:0] delayed_ray_dir
+    output wire [53:0] delayed_ray_dir,
+    output wire output_hit_flag
     );
     //Master sphere intersection formula
     //a = Ray_Dir * Ray_Dir
@@ -52,9 +53,11 @@ module primary_ray_sphr(
     .output_hit(hit_flag_1)
     );
    
-    wire signed [23:0] sqrt_delta;
+    wire [23:0] sqrt_delta;
     wire sqrt_done;
     wire hit_flag_0, hit_flag_1;
+    
+    assign output_hit_flag = hit_flag_1;
     
     //a and b have to be transferred to the pipeline to reach the division
     //module aligned
