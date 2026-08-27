@@ -15,7 +15,8 @@ module vga_top(
     output wire [9:0] vert_value,
     output wire render,
     output wire new_frame,
-    output wire frame_start  
+    output wire frame_start, 
+    output wire render_post_delay
     );
     
     
@@ -31,10 +32,26 @@ module vga_top(
     //assign read_en = 1'b1;
     assign render = (horz_value <= 783 && horz_value >= 144 && vert_value <= 514 && vert_value >= 35) ? 1'b1:1'b0;
     assign new_frame = (horz_value == 784 && vert_value == 515) ? 1'b1:1'b0; //new frame goes high the second the last frame ends
-    assign frame_start = (horz_value == 144 && vert_value == 34) ? 1'b1:1'b0; //frame_start is used to start cores a little bit before render starts
+    assign frame_start = (horz_value == 116 && vert_value == 34) ? 1'b1:1'b0; //frame_start is used to start cores a little bit before render starts
     
     assign VGA_R = (render) ? 4'b1111:4'b0000;
     assign VGA_G = (render) ? 4'b1111:4'b0000;
     assign VGA_B = (render) ? 4'b1111:4'b0000;
+    
+    localparam DELAY_CYCLES = 140;
+    
+    (* shreg_extract = "yes" *)
+    reg render_delay [DELAY_CYCLES-1:0];
+
+    integer i;
+    always @(posedge clk) begin
+        render_delay[0] <= render;
+        
+        for (i = 0; i < DELAY_CYCLES - 1; i = i + 1) begin
+            render_delay[i+1] <= render_delay[i];
+        end
+    end
+    
+    assign render_post_delay = render_delay[DELAY_CYCLES-1];
     
 endmodule

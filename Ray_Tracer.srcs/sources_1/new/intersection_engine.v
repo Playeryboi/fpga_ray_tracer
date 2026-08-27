@@ -27,7 +27,14 @@ module intersection_engine(
     output reg intersect_read,
     input wire intersect_ready,
     input wire [31:0] bram_data,
-    output reg [31:0] bram_addr 
+    output reg [31:0] bram_addr,
+    
+    //output colors
+    
+    output wire [3:0] red,
+    output wire [3:0] green,
+    output wire [3:0] blue,
+    output wire valid_hit 
     );
                
     reg signed [31:0] object [2:0];  
@@ -133,7 +140,10 @@ module intersection_engine(
     .camera_x(camera_x),
     .camera_y(camera_y),
     .camera_z(camera_z),
-    .LED(LED) 
+    .red(red),
+    .green(green),
+    .blue(blue), 
+    .valid_hit(valid_hit) 
     );
     
 endmodule

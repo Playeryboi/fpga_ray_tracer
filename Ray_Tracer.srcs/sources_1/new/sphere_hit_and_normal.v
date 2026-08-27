@@ -16,11 +16,8 @@ module sphere_hit_and_normal(
     output wire [53:0] normal_packed,
     output wire [74:0] hit_point_packed,
     output wire module_done,
-    output wire output_hit_flag,
-    
-    output wire LED
+    output wire output_hit_flag
     );
-     assign LED = ^normal_packed;
     //keeping in mind that this currently works with a fixed amount of objects
     
     //object variables stay the same throughout the frame, no need to pipeline

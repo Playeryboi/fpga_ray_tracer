@@ -14,7 +14,11 @@ module sphere_intersect_core(
     input wire signed [17:0] camera_x,
     input wire signed [17:0] camera_y,
     input wire signed [17:0] camera_z,
-    output wire LED
+    
+    output wire [3:0] red,
+    output wire [3:0] green,
+    output wire [3:0] blue,
+    output wire valid_hit
     );
    
    //currently only supports 2 objects, 1 sphere and 1 light
@@ -56,14 +60,23 @@ module sphere_intersect_core(
     .normal_packed(normal_packed),   
     .hit_point_packed(hit_point_packed),
     .module_done(SHN_done),
-    .output_hit_flag(SHN_to_shadow_hit),
-    .LED(LED)
+    .output_hit_flag(SHN_to_shadow_hit)
     );
     
     wire SHN_to_shadow_hit;
     wire [53:0] normal_packed;
     wire [74:0] hit_point_packed;    
     wire SHN_done;
+    
+    wire [3:0] red_output;
+    wire [3:0] green_output;
+    wire [3:0] blue_output;
+    
+    assign red = red_output;
+    assign green = green_output;
+    assign blue = blue_output;
+    
+    
     
     //calculates secondary shadow ray and lightning
     shadow_ray_sphr SRS0 (
@@ -73,7 +86,12 @@ module sphere_intersect_core(
     .input_hit_flag(SHN_to_shadow_hit),
     .normal_packed(normal_packed),   
     .hit_point_packed(hit_point_packed),
-    .module_done(SHN_done)      
+    .module_done(SHN_done),
+    
+    .red(red_output),
+    .green(green_output),
+    .blue(blue_output),
+    .valid_hit(valid_hit)      
     );
     
 endmodule

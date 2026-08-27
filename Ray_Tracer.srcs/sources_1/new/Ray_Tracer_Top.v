@@ -9,7 +9,12 @@ module Ray_Tracer_Top(
     output wire [3:0] VGA_R,
     output wire [3:0] VGA_G,
     output wire [3:0] VGA_B,
-    output wire LED    
+    
+    output wire [3:0] red,          
+    output wire [3:0] green,        
+    output wire [3:0] blue,         
+    output wire valid_hit,          
+    output wire delayed_render_flag   
     );
 
     //wire declarations
@@ -72,8 +77,9 @@ module Ray_Tracer_Top(
     .VGA_B(VGA_B), 
     .render(render),
     .new_frame(new_frame), //goes high after the end of a frame
-    .frame_start(frame_start) //goes high a set amount of pixels before the new frame is drawn
-    );//each pixel takes 4 clock cycles in the 100Mhz domain
+    .frame_start(frame_start),
+    .render_post_delay(delayed_render_flag)
+    );
     
     
     camera_module camera1(
@@ -113,7 +119,10 @@ module Ray_Tracer_Top(
     .bram_data(intersection_data),
     .bram_addr(bram_intersection_addr),
     .start_cores(start_cores),
-    .LED(LED)
+    .red(red),
+    .green(green),
+    .blue(blue),
+    .valid_hit(valid_hit)
     );
     
     mock_bram_controller mock_ctrl (

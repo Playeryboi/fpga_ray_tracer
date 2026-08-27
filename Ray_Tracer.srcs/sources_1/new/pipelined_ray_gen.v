@@ -54,7 +54,6 @@ module pipelined_ray_gen(
         delta_u_offset[0] = 18'sd0; delta_u_offset[1] = 18'sd0; delta_u_offset[2] = 18'sd0;
         delta_v_offset[0] = 18'sd0; delta_v_offset[1] = 18'sd0; delta_v_offset[2] = 18'sd0;
     end
-
     //The Accumulator & Counter Block
     always @(posedge clk) begin       
         if (setup_done && render) begin

@@ -90,7 +90,7 @@ module mock_bram_controller(
 
 
                 // Object 2 Origin (Q9.9) - light at (5, 5, 5)
-                32'd64: mock_dout <= 32'sd2560; 
+                32'd64: mock_dout <= 32'sd1024; 
                 32'd68: mock_dout <= 32'sd2560;
                 32'd72: mock_dout <= 32'sd2560;
                 
