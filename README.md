@@ -18,7 +18,7 @@ Designed for real-time performance, the render engine outputs directly to the Ne
 
 ## Development Roadmap
 
-* **Align RT cores with VGA output for Hardware Validation: ** The VGA controller and the RT cores are not aligned, which prevents the hardware from outputting the correct image.
+* **Align RT cores with VGA output for Hardware Validation:** The VGA controller and the RT cores are not aligned, which prevents the hardware from outputting the correct image.
 * **200 MHz Overclock & FIFO Decoupling:** Decoupling the math engine from the 25 MHz VGA display controller via FIFO buffers. This will allow the intersection pipeline to run asynchronously at maximum fabric speed (Target: 200 MHz).
 * **Secondary Shadow Rays:** Implementing epsilon offset adders, secondary intersection cores, and occlusion multiplexers to evaluate light blockage and cast true geometric shadows.
 * **Expanded Geometry:** Instantiating distinct mathematical intersection cores for infinite floor planes and bounding-box cubes.
